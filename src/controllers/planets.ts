@@ -4,17 +4,14 @@ import pgPromise from "pg-promise";
 
 const db = pgPromise()("postgres://postgres:postgres@localhost:5432/video");
 
-type Planet = {
-    id: number;
-    name: string;
-  };
   const setupDb = async () => {
     await db.none(`
       DROP TABLE IF EXISTS planets;
   
       CREATE TABLE planets (
         id SERIAL NOT NULL PRIMARY KEY,
-        name TEXT NOT NULL
+        name TEXT NOT NULL,
+        image TEXT
       );
     `);
     await db.none(`INSERT INTO planets (name) VALUES ('Earth');`);
@@ -81,4 +78,17 @@ type Planet = {
     res.status(200).json({ message: "Planet deleted successfully" });
   }
 
-  export { getAll, getOneById, create, updateById, deleteById };
+  const createImage = async(req: Request, res: Response) => {
+    const {id} = req.params;
+    const fileName = req.file?.path;
+
+    if (fileName) {
+      db.none("UPDATE planets SET image=$2 WHERE id=$1;", [id, fileName]);
+      res.status(201).json({ message: "Image added successfully" });
+    } else {
+      res.status(400).json({ message: "Image not added" });
+    }
+  }
+
+
+  export { getAll, getOneById, create, updateById, deleteById, createImage };
